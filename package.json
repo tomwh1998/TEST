@@ -1,0 +1,14 @@
+{
+  "name": "pain-points-platform",
+  "version": "1.0.0",
+  "description": "Simple web platform to display pain points with admin panel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node -e \"console.log('No tests specified')\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
