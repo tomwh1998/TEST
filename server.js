@@ -1,7 +1,11 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
+ const http = require('http');
+ const fs = require('fs');
+ const path = require('path');
+ const url = require('url');
+ const IS_PROD = process.env.NODE_ENV === 'production';
+ const querystring = require('querystring');
+createServer(
+
 const querystring = require('querystring');
 
 const DATA_FILE = path.join(__dirname, 'data', 'pain_points.json');
@@ -85,6 +89,16 @@ function renderAdminPage(content) {
 }
 
 const server = http.createServer((req, res) => {
+  
+    if (IS_PROD) {
+    const proto = req.headers['x-forwarded-proto'] || (req.connection && req.connection.encrypted ? 'https' : 'http');
+    if (proto !== 'https') {
+      res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+      return res.end();
+    }
+  }
+
+  
   const parsedUrl = url.parse(req.url, true);
 
   // Serve static files from the public directory
