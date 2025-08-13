@@ -5,6 +5,18 @@ const url = require('url');
 const querystring = require('querystring');
 
 const DATA_FILE = path.join(__dirname, 'data', 'pain_points.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+const MIME_TYPES = {
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.html': 'text/html',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon'
+};
 
 function readPainPoints() {
   try {
@@ -75,6 +87,32 @@ function renderAdminPage(content) {
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
 
+  // Serve static files from the public directory
+  if (req.method === 'GET') {
+    const safePath = path
+      .normalize(parsedUrl.pathname)
+      .replace(/^\/+/, '');
+    const filePath = path.join(PUBLIC_DIR, safePath);
+    if (
+      filePath.startsWith(PUBLIC_DIR) &&
+      fs.existsSync(filePath) &&
+      fs.statSync(filePath).isFile()
+    ) {
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Server error');
+        } else {
+          res.writeHead(200, { 'Content-Type': contentType });
+          res.end(data);
+        }
+      });
+      return;
+    }
+  }
+
   if (req.method === 'GET' && (parsedUrl.pathname === '/' || parsedUrl.pathname === '/pain-points')) {
     const content = readPainPoints();
     const html = renderPainPointsPage(content);
@@ -100,17 +138,6 @@ const server = http.createServer((req, res) => {
       res.writeHead(302, { Location: '/pain-points' });
       res.end();
     });
-  } else if (req.method === 'GET' && parsedUrl.pathname === '/style.css') {
-    const cssPath = path.join(__dirname, 'public', 'style.css');
-    fs.readFile(cssPath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('Not found');
-      } else {
-        res.writeHead(200, { 'Content-Type': 'text/css' });
-        res.end(data);
-      }
-    });
   } else {
     res.writeHead(404);
     res.end('Not found');
@@ -118,6 +145,7 @@ const server = http.createServer((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const HOST = '0.0.0.0';
+server.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
